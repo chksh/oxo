@@ -1,0 +1,151 @@
+% Style Package for OxoCard 
+% 
+% (c) Christian Haas, KS Heerbrugg
+%
+%% This program can be redistributed and/or modified under the terms
+%% of the LaTeX Project Public License Distributed from CTAN archives
+%% in directory macros/latex/base/lppl.txt.
+% 
+\NeedsTeXFormat{LaTeX2e}[1994/06/01]
+\ProvidesPackage{oxo}
+  [2011/01/11 v0.01 LaTeX package for my own purpose]
+
+\RequirePackage{tikz}
+\RequirePackage{xparse}
+\RequirePackage{ifluatex}
+\ifluatex
+\else
+  \PackageError{oxo}{LuaTeX is required}\@ehd
+  \newcommand*{\euclide}[2]{%
+    % dummy definition
+  }%
+  \expandafter\endinput % abort early
+\fi
+
+\RequirePackage{luacode}
+
+\newcounter{pixelCount}
+\newcounter{buttonCount}
+
+% OxoCards Base Colors
+\definecolor{red}{RGB}{255,0,0}
+\definecolor{green}{RGB}{0,255,0}
+\definecolor{blue}{RGB}{0,0,255}
+\definecolor{black}{RGB}{0,0,0}
+\definecolor{white}{RGB}{255,255,255}
+\definecolor{yellow}{RGB}{255,255,0}
+\definecolor{cyan}{RGB}{0,255,255}
+\definecolor{magenta}{RGB}{255,0,255}
+% Others Colors will use default tikz color: orange, purple
+
+\begin{luacode*}
+function replaceShorts(coding)
+	coding= string.gsub(coding, "bq", "blue")
+	coding= string.gsub(coding, "blq", "black")
+	coding= string.gsub(coding, "rq", "red")
+	coding= string.gsub(coding, "wq", "white")
+	coding= string.gsub(coding, "yq", "yellow")	
+	coding= string.gsub(coding, "gq", "green")
+	coding= string.gsub(coding, "oq", "orange")
+	coding= string.gsub(coding, "pq", "purple")
+	coding= string.gsub(coding, "cq", "cyan")
+	coding= string.gsub(coding, "mq", "magenta")
+	return coding
+end
+
+function replaceShortsButton(coding)
+	coding= string.gsub(coding, "0", "white")
+	coding= string.gsub(coding, "1", "red")
+	return coding
+end
+
+
+function setButtonColors(input)
+	buttons ={}
+	for str in string.gmatch(input, "([^"..",".."]+)") do
+		table.insert(buttons, replaceShortsButton(str))
+	end
+end
+
+function setPixelColors(input)
+	pixels={}
+	for str in string.gmatch(input, "([^"..",".."]+)") do
+		table.insert(pixels, replaceShorts(str .. "q"))
+	end
+--	for lineCount = 1, 64 do
+--	tex.print(pixels[lineCount])
+--		tex.print("\\\\")
+--	end
+end
+
+function getPixelColor(i)
+	color=pixels[tonumber(i)]
+	tex.print(color)
+end
+
+function getButtonColor(i)
+	color=buttons[tonumber(i)]
+	tex.print(color)
+end
+
+
+\end{luacode*}
+\newcommand\oxo[1]  % Draws an Oxocard LED Matrix with the colors given (r=red, y=yellow, b=blue, g=green, w=white, bl=black, o=orange, p=purple)
+{  \directlua{setPixelColors("#1")}
+
+
+\setcounter{pixelCount}{0}
+\begin{tikzpicture}
+\draw[step=0.5cm,color=lightgray] (-2,-2) grid (2,2);
+\foreach \y in {+1.75,+1.25,+0.75,+0.25,-0.25,-0.75,-1.25,-1.75}
+  \foreach \x in {-1.75,-1.25,-0.75,-0.25,0.25,0.75,1.25,1.75}
+    \stepcounter{pixelCount}
+    \node[fill=\directlua{getPixelColor(\thepixelCount)}, minimum size=0.47cm] at (\x,\y) {}; 
+\end{tikzpicture}
+}
+
+\newcommand\oxosmall[1]  % Draws a small Oxocard LED Matrix with the colors given (r=red, y=yellow, b=blue, g=green, w=white, bl=black, o=orange, p=purple)
+{  \directlua{setPixelColors("#1")}
+
+\setcounter{pixelCount}{0}
+
+\begin{tikzpicture}
+\draw[step=0.25cm,color=lightgray] (-1,-1) grid (1,1);
+\foreach \y in {+0.875,+0.625,+0.375,+0.125,-0.125,-0.375,-0.625,-0.875}
+  \foreach \x in {-0.875,-0.625,-0.375,-0.125,+0.125,+0.375,+0.625,+0.875}
+    \stepcounter{pixelCount}
+    \node[fill=\directlua{getPixelColor(\thepixelCount)}, scale=0.9] at (\x,\y) {}; 
+\end{tikzpicture}
+}
+
+\newcommand\oxofull[2]  % Draws a small Oxocard LED Matrix with the colors given (r=red, y=yellow, b=blue, g=green, w=white, bl=black, o=orange, p=purple)
+{  \directlua{setPixelColors("#1")}
+ \directlua{setButtonColors("#2")}
+\setcounter{pixelCount}{0}
+\setcounter{buttonCount}{0}
+
+\begin{tikzpicture}
+\draw[step=0.25cm,color=lightgray] (-1,-1) grid (1,1);
+\stepcounter{buttonCount}
+\node[fill=\directlua{getButtonColor(\thebuttonCount)}, scale=0.7,draw=black, line width=0.05mm, inner sep=0pt, minimum size=0.5cm] at (-1.4,-0.9){};
+\stepcounter{buttonCount}
+\node[fill=\directlua{getButtonColor(\thebuttonCount)},scale=0.7,draw=black, line width=0.05mm, inner sep=0pt, minimum size=0.5cm] at (+1.4,-0.9){};
+\stepcounter{buttonCount}
+\node[fill=\directlua{getButtonColor(\thebuttonCount)},scale=0.7,draw=black, line width=0.05mm, inner sep=0pt, minimum size=0.5cm] at (-1.4,-1.4){};
+\stepcounter{buttonCount}
+\node[fill=\directlua{getButtonColor(\thebuttonCount)},scale=0.7,draw=black, line width=0.05mm, inner sep=0pt, minimum size=0.5cm] at (-0.8,-1.4){};
+\stepcounter{buttonCount}
+\node[fill=\directlua{getButtonColor(\thebuttonCount)},scale=0.7,draw=black, line width=0.05mm, inner sep=0pt, minimum size=0.5cm] at (+0.8,-1.4){};
+\stepcounter{buttonCount}
+\node[fill=\directlua{getButtonColor(\thebuttonCount)},scale=0.7,draw=black, line width=0.05mm, inner sep=0pt, minimum size=0.5cm] at (+1.4,-1.4){};
+\foreach \y in {+0.875,+0.625,+0.375,+0.125,-0.125,-0.375,-0.625,-0.875}
+  \foreach \x in {-0.875,-0.625,-0.375,-0.125,+0.125,+0.375,+0.625,+0.875}
+    \stepcounter{pixelCount}
+    \node[fill=\directlua{getPixelColor(\thepixelCount)}, scale=0.9] at (\x,\y) {}; 
+\end{tikzpicture}
+}
+
+
+\endinput
+%%
+%% End of file `mypackage.sty'.
