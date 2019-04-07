@@ -13,6 +13,9 @@
 \RequirePackage{tikz}
 \RequirePackage{xparse}
 \RequirePackage{ifluatex}
+\RequirePackage{luacode}
+\RequirePackage{color}
+
 \ifluatex
 \else
   \PackageError{oxo}{LuaTeX is required}\@ehd
@@ -22,7 +25,7 @@
   \expandafter\endinput % abort early
 \fi
 
-\RequirePackage{luacode}
+
 
 \newcounter{pixelCount}
 \newcounter{buttonCount}
@@ -37,6 +40,31 @@
 \definecolor{cyan}{RGB}{0,255,255}
 \definecolor{magenta}{RGB}{255,0,255}
 % Others Colors will use default tikz color: orange, purple
+
+\newcommand*\borderoxo[1]{%
+  \normalmarginpar\def\pointer{\filledmedtriangleright}%
+    \def\stackalignment{r}%
+ \marginpar{%
+   \topinset{%
+      \scalebox{1.5}{\textcolor{blue}{}}}{%
+      \belowbaseline[-20pt]{%
+        \stackengine%
+         {-5pt}%
+          {\fcolorbox{white}{white}{\parbox{3.5cm}%
+            {\vspace{3pt}\raggedright \small{#1}}}}%
+          {}%
+          {O}%
+          {l}%
+          {F}%
+          {F}%
+          {S}%
+        }%
+      }{%
+      3pt}{%
+      -2pt}%
+  }%
+}
+
 
 \begin{luacode*}
 function replaceShorts(coding)
@@ -143,6 +171,24 @@ end
     \stepcounter{pixelCount}
     \node[fill=\directlua{getPixelColor(\thepixelCount)}, scale=0.9] at (\x,\y) {}; 
 \end{tikzpicture}
+}
+
+\newcommand\oxoedge[2]
+{  \directlua{setPixelColors("#1")}
+
+\setcounter{pixelCount}{0}
+\borderoxo{
+\oxosmall{#1}\\
+\small{#2}}
+}
+
+\newcommand\oxoedgefull[3]
+{  \directlua{setPixelColors("#1")}
+
+\setcounter{pixelCount}{0}
+\borderoxo{
+\oxofull{#1}{#2}\\
+\small{#3}}
 }
 
 
